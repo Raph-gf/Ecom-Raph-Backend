@@ -3,6 +3,7 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import cors from "cors";
 import productRouter from "./routes/productsRoute";
+import userRouter from "./routes/userRoute";
 main().catch((err) => console.log(err));
 
 async function main() {
@@ -21,6 +22,7 @@ app.get("/", (req, res) => {
   res.json("Welcome to the huuudd");
 });
 
+app.use("/users", userRouter);
 app.use("/products", productRouter);
 
 app.listen(port, () =>

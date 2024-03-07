@@ -169,6 +169,79 @@ const deleteProduct = async (req, res) => {
 
 /***/ }),
 
+/***/ "./src/controllers/userController.js":
+/*!*******************************************!*\
+  !*** ./src/controllers/userController.js ***!
+  \*******************************************/
+/*! exports provided: signIn, login */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "signIn", function() { return signIn; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "login", function() { return login; });
+/* harmony import */ var _models_userModel__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../models/userModel */ "./src/models/userModel.js");
+/* harmony import */ var dotenv_config__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! dotenv/config */ "dotenv/config");
+/* harmony import */ var dotenv_config__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(dotenv_config__WEBPACK_IMPORTED_MODULE_1__);
+
+
+const jwt = __webpack_require__(/*! jsonwebtoken */ "jsonwebtoken");
+const secretKey = process.env.SECRETKEY;
+const signIn = async (req, res) => {
+  try {
+    const newUser = await _models_userModel__WEBPACK_IMPORTED_MODULE_0__["default"].create(req.body);
+    newUser.password = await newUser.encryptedPassword(req.body.password);
+    newUser.save();
+    const createToken = jwt.sign({
+      id: newUser.id
+    }, secretKey, {
+      expiresIn: "1d"
+    });
+    res.json({
+      newUser,
+      createToken
+    });
+  } catch (error) {
+    res.json({
+      error: error.message
+    });
+  }
+};
+const login = async (req, res) => {
+  const email = req.body.email;
+  try {
+    const user = await _models_userModel__WEBPACK_IMPORTED_MODULE_0__["default"].findOne({
+      email
+    }).select("+password");
+    if (!user) {
+      const error = new Error("Email invalide");
+      throw error;
+    }
+    const verifiedPassword = await user.validPassword(req.body.password, user.password);
+    if (!verifiedPassword) {
+      const error = new Error("Invalid password");
+      throw error;
+    }
+    const token = jwt.sign({
+      id: user.id
+    }, secretKey, {
+      expiresIn: "1d"
+    });
+    res.json({
+      user,
+      token,
+      message: "Connexion réussi"
+    });
+  } catch (error) {
+    res.json({
+      error: error.message
+    });
+  }
+};
+
+
+/***/ }),
+
 /***/ "./src/index.js":
 /*!**********************!*\
   !*** ./src/index.js ***!
@@ -187,6 +260,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var cors__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! cors */ "cors");
 /* harmony import */ var cors__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(cors__WEBPACK_IMPORTED_MODULE_3__);
 /* harmony import */ var _routes_productsRoute__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./routes/productsRoute */ "./src/routes/productsRoute.js");
+/* harmony import */ var _routes_userRoute__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./routes/userRoute */ "./src/routes/userRoute.js");
+
 
 
 
@@ -207,6 +282,7 @@ app.use(express__WEBPACK_IMPORTED_MODULE_0___default.a.urlencoded({
 app.get("/", (req, res) => {
   res.json("Welcome to the huuudd");
 });
+app.use("/users", _routes_userRoute__WEBPACK_IMPORTED_MODULE_5__["default"]);
 app.use("/products", _routes_productsRoute__WEBPACK_IMPORTED_MODULE_4__["default"]);
 app.listen(port, () => console.log(`[SERVER] Listening on http://localhost:${port}`));
 
@@ -245,6 +321,73 @@ const Product = Object(mongoose__WEBPACK_IMPORTED_MODULE_0__["model"])("Product"
 
 /***/ }),
 
+/***/ "./src/models/userModel.js":
+/*!*********************************!*\
+  !*** ./src/models/userModel.js ***!
+  \*********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var mongoose__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! mongoose */ "mongoose");
+/* harmony import */ var mongoose__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(mongoose__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var bcryptjs__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! bcryptjs */ "bcryptjs");
+/* harmony import */ var bcryptjs__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(bcryptjs__WEBPACK_IMPORTED_MODULE_1__);
+
+
+const userSchema = new mongoose__WEBPACK_IMPORTED_MODULE_0__["Schema"]({
+  firstname: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  lastname: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  email: {
+    type: String,
+    required: true,
+    lowercase: true,
+    unique: true
+  },
+  password: {
+    type: String,
+    required: true
+  },
+  zipCode: {
+    type: Number,
+    min: [1000, "Code Postal is too short"],
+    max: 99999,
+    required: true
+  },
+  Adress: {
+    type: String,
+    required: true
+  },
+  isAdmin: {
+    type: Boolean,
+    default: false
+  }
+}, {
+  timestamps: true
+});
+userSchema.methods.encryptedPassword = async password => {
+  const salt = bcryptjs__WEBPACK_IMPORTED_MODULE_1___default.a.genSaltSync(5);
+  const hash = bcryptjs__WEBPACK_IMPORTED_MODULE_1___default.a.hashSync(password, salt);
+  return hash;
+};
+userSchema.methods.validPassword = async (candidatePassword, oldPassword) => {
+  const result = await bcryptjs__WEBPACK_IMPORTED_MODULE_1___default.a.compare(candidatePassword, oldPassword);
+  return result;
+};
+const User = Object(mongoose__WEBPACK_IMPORTED_MODULE_0__["model"])("User", userSchema);
+/* harmony default export */ __webpack_exports__["default"] = (User);
+
+/***/ }),
+
 /***/ "./src/routes/productsRoute.js":
 /*!*************************************!*\
   !*** ./src/routes/productsRoute.js ***!
@@ -266,6 +409,24 @@ productRouter.delete("/delete-product/:id", _controllers_productsController__WEB
 
 /***/ }),
 
+/***/ "./src/routes/userRoute.js":
+/*!*********************************!*\
+  !*** ./src/routes/userRoute.js ***!
+  \*********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _controllers_userController__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../controllers/userController */ "./src/controllers/userController.js");
+
+const userRouter = __webpack_require__(/*! express */ "express").Router();
+userRouter.post("/connexion", _controllers_userController__WEBPACK_IMPORTED_MODULE_0__["login"]);
+userRouter.post("/inscription", _controllers_userController__WEBPACK_IMPORTED_MODULE_0__["signIn"]);
+/* harmony default export */ __webpack_exports__["default"] = (userRouter);
+
+/***/ }),
+
 /***/ 0:
 /*!****************************!*\
   !*** multi ./src/index.js ***!
@@ -275,6 +436,17 @@ productRouter.delete("/delete-product/:id", _controllers_productsController__WEB
 
 module.exports = __webpack_require__(/*! /Users/raphaelgarnier--fagour/Documents/Dev.web/BACKEND/Ecom-BACKEND/src/index.js */"./src/index.js");
 
+
+/***/ }),
+
+/***/ "bcryptjs":
+/*!***************************!*\
+  !*** external "bcryptjs" ***!
+  \***************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("bcryptjs");
 
 /***/ }),
 
@@ -308,6 +480,17 @@ module.exports = require("dotenv/config");
 /***/ (function(module, exports) {
 
 module.exports = require("express");
+
+/***/ }),
+
+/***/ "jsonwebtoken":
+/*!*******************************!*\
+  !*** external "jsonwebtoken" ***!
+  \*******************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("jsonwebtoken");
 
 /***/ }),
 
