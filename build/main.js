@@ -92,7 +92,7 @@ module.exports =
 /*!***********************************************!*\
   !*** ./src/controllers/productsController.js ***!
   \***********************************************/
-/*! exports provided: getAllProducts, getProduct, createProduct, updateProduct, deleteProduct */
+/*! exports provided: getAllProducts, getProduct, createProduct, updateProduct, deleteProduct, addProductToCart */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -102,7 +102,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createProduct", function() { return createProduct; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "updateProduct", function() { return updateProduct; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "deleteProduct", function() { return deleteProduct; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addProductToCart", function() { return addProductToCart; });
 /* harmony import */ var _models_productsModel__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../models/productsModel */ "./src/models/productsModel.js");
+/* harmony import */ var _models_cartModels__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../models/cartModels */ "./src/models/cartModels.js");
+/* harmony import */ var _models_userModel__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../models/userModel */ "./src/models/userModel.js");
+
+
 
 const getAllProducts = async (req, res) => {
   try {
@@ -129,7 +134,7 @@ const createProduct = async (req, res) => {
     const newUser = await _models_productsModel__WEBPACK_IMPORTED_MODULE_0__["default"].create(req.body);
     console.log(newUser.email);
     res.json({
-      message: "User created succesfully",
+      message: "Product created succesfully",
       newUser
     });
   } catch (error) {
@@ -166,6 +171,81 @@ const deleteProduct = async (req, res) => {
     res.status(500).json(error.message);
   }
 };
+// export const addProductToCart = async (req, res) => {
+//   try {
+//     // const user = await User.findById({_id:req.params._id});
+//     // console.log(user);
+//     const product = await Product.findById({ _id: req.params.id });
+//     console.log(product);
+//     if (!product) {
+//       console.log("erreur product not found");
+//     }
+//     const newcart = await Cart.create({ products: [product] });
+//     console.log(newcart);
+//     // newcart.products.push(product);
+//     newcart.save();
+//     res.json({ cart: newcart, message: "Product added successfully" });
+//   } catch (error) {
+//     res.json({ error: error.message });
+//   }
+// };
+// export const addProductToCart = async (req, res) => {
+//   try {
+//     const product = await Product.findById({ _id: req.params.id });
+//     if (!product) {
+//       return res.status(404).json({ error: "Product not found" });
+//     }
+
+//     const user = await User.findById(req.params.userId);
+//     if (!user) {
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     let cart = await Cart.findOne({ userId: user._id });
+
+//     if (!cart) {
+//       cart = await Cart.create({ userId: user._id, products: [product] });
+//       console.log("New cart created, product added succefully", cart);
+//     } else {
+//       cart.products.push(product);
+//       await cart.save();
+//       console.log("Product added to existing cart:", cart);
+//     }
+
+//     res.json({ cart, message: "Product added successfully" });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+const addProductToCart = async (req, res) => {
+  try {
+    const product = await _models_productsModel__WEBPACK_IMPORTED_MODULE_0__["default"].findById({
+      _id: req.params.id
+    });
+    if (!product) {
+      return res.status(404).json({
+        error: "Product not found"
+      });
+    }
+    const user = await _models_userModel__WEBPACK_IMPORTED_MODULE_2__["default"].findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found"
+      });
+    } else {
+      user.cart.push([product.id]);
+      await user.save();
+    }
+    res.json({
+      user,
+      message: "Product added successfully"
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message
+    });
+  }
+};
 
 /***/ }),
 
@@ -189,6 +269,17 @@ const jwt = __webpack_require__(/*! jsonwebtoken */ "jsonwebtoken");
 const secretKey = process.env.SECRETKEY;
 const signIn = async (req, res) => {
   try {
+    const {
+      email
+    } = req.body;
+    const existingEmail = await _models_userModel__WEBPACK_IMPORTED_MODULE_0__["default"].findOne({
+      email
+    });
+    if (existingEmail) {
+      return res.status(400).json({
+        message: "Email already exists"
+      });
+    }
     const newUser = await _models_userModel__WEBPACK_IMPORTED_MODULE_0__["default"].create(req.body);
     newUser.password = await newUser.encryptedPassword(req.body.password);
     newUser.save();
@@ -203,6 +294,9 @@ const signIn = async (req, res) => {
     });
   } catch (error) {
     res.json({
+      error: error.message
+    });
+    console.log({
       error: error.message
     });
   }
@@ -288,6 +382,48 @@ app.listen(port, () => console.log(`[SERVER] Listening on http://localhost:${por
 
 /***/ }),
 
+/***/ "./src/models/cartModels.js":
+/*!**********************************!*\
+  !*** ./src/models/cartModels.js ***!
+  \**********************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var mongoose__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! mongoose */ "mongoose");
+/* harmony import */ var mongoose__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(mongoose__WEBPACK_IMPORTED_MODULE_0__);
+
+const cartSchema = new mongoose__WEBPACK_IMPORTED_MODULE_0__["Schema"]({
+  products: [{
+    productId: {
+      type: mongoose__WEBPACK_IMPORTED_MODULE_0__["Schema"].Types.ObjectId,
+      ref: "Product"
+    },
+    quantity: {
+      type: Number
+    }
+  }],
+  userId: {
+    type: mongoose__WEBPACK_IMPORTED_MODULE_0__["Schema"].Types.ObjectId,
+    ref: "user"
+  },
+  active: {
+    type: Boolean,
+    default: true
+  },
+  modifiedOn: {
+    type: Date,
+    default: Date.now
+  }
+}, {
+  timestamps: true
+});
+const Cart = Object(mongoose__WEBPACK_IMPORTED_MODULE_0__["model"])("cart", cartSchema);
+/* harmony default export */ __webpack_exports__["default"] = (Cart);
+
+/***/ }),
+
 /***/ "./src/models/productsModel.js":
 /*!*************************************!*\
   !*** ./src/models/productsModel.js ***!
@@ -355,7 +491,8 @@ const userSchema = new mongoose__WEBPACK_IMPORTED_MODULE_0__["Schema"]({
   },
   password: {
     type: String,
-    required: true
+    required: true,
+    minlength: [6, "at least 6 characters"]
   },
   zipCode: {
     type: Number,
@@ -370,7 +507,11 @@ const userSchema = new mongoose__WEBPACK_IMPORTED_MODULE_0__["Schema"]({
   isAdmin: {
     type: Boolean,
     default: false
-  }
+  },
+  cart: [{
+    type: mongoose__WEBPACK_IMPORTED_MODULE_0__["Schema"].Types.ObjectId,
+    ref: "cart"
+  }]
 }, {
   timestamps: true
 });
@@ -403,6 +544,7 @@ const productRouter = __webpack_require__(/*! express */ "express").Router();
 productRouter.get("/all-products", _controllers_productsController__WEBPACK_IMPORTED_MODULE_0__["getAllProducts"]);
 productRouter.get("/:id", _controllers_productsController__WEBPACK_IMPORTED_MODULE_0__["getProduct"]);
 productRouter.post("/create-product", _controllers_productsController__WEBPACK_IMPORTED_MODULE_0__["createProduct"]);
+productRouter.post("/:id/addToCart/:userId", _controllers_productsController__WEBPACK_IMPORTED_MODULE_0__["addProductToCart"]);
 productRouter.put("/update-product/:id", _controllers_productsController__WEBPACK_IMPORTED_MODULE_0__["updateProduct"]);
 productRouter.delete("/delete-product/:id", _controllers_productsController__WEBPACK_IMPORTED_MODULE_0__["deleteProduct"]);
 /* harmony default export */ __webpack_exports__["default"] = (productRouter);

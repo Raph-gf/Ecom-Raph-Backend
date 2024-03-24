@@ -6,6 +6,11 @@ const secretKey = process.env.SECRETKEY;
 
 const signIn = async (req, res) => {
   try {
+    const { email } = req.body;
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
     const newUser = await User.create(req.body);
     newUser.password = await newUser.encryptedPassword(req.body.password);
     newUser.save();
@@ -15,6 +20,7 @@ const signIn = async (req, res) => {
     res.json({ newUser, createToken });
   } catch (error) {
     res.json({ error: error.message });
+    console.log({ error: error.message });
   }
 };
 

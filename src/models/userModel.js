@@ -1,4 +1,10 @@
-import { Schema, model } from "mongoose";
+import {
+  Schema,
+  SchemaType,
+  SchemaTypeOptions,
+  SchemaTypes,
+  model,
+} from "mongoose";
 import bcrypt from "bcryptjs";
 
 const userSchema = new Schema(
@@ -6,7 +12,11 @@ const userSchema = new Schema(
     firstname: { type: String, required: true, trim: true },
     lastname: { type: String, required: true, trim: true },
     email: { type: String, required: true, lowercase: true, unique: true },
-    password: { type: String, required: true },
+    password: {
+      type: String,
+      required: true,
+      minlength: [6, "at least 6 characters"],
+    },
     zipCode: {
       type: Number,
       min: [1000, "Code Postal is too short"],
@@ -15,6 +25,7 @@ const userSchema = new Schema(
     },
     Adress: { type: String, required: true },
     isAdmin: { type: Boolean, default: false },
+    cart: [{ type: Schema.Types.ObjectId, ref: "cart" }],
   },
   { timestamps: true }
 );
