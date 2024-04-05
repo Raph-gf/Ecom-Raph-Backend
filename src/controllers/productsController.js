@@ -62,17 +62,27 @@ export const deleteProduct = async (req, res) => {
 
 export const addProductToCart = async (req, res) => {
   try {
-    const product = await Product.findById({ _id: req.params.id });
+    const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
+
     const user = await User.findById(req.params.userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
-    } else {
-      user.cart.push([product.id]);
-      await user.save();
     }
+
+    const findProductInCart = user.cart.find(
+      (i) => i._id.toString() === product._id.toString()
+    );
+
+    if (findProductInCart) {
+      findProductInCart.quantity += 1;
+    } else {
+      user.cart.push({ _id: product._id, quantity: 1 });
+    }
+
+    await user.save();
 
     res.json({ user, message: "Product added successfully" });
   } catch (error) {
