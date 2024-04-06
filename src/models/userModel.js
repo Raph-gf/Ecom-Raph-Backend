@@ -25,7 +25,7 @@ const userSchema = new Schema(
     },
     Adress: { type: String, required: true },
     isAdmin: { type: Boolean, default: false },
-    cart: [{ type: Schema.Types.ObjectId, ref: "cart" }],
+    userCarts: [{ type: Schema.Types.ObjectId, ref: "cart" }],
   },
   { timestamps: true }
 );
