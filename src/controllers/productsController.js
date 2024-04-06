@@ -111,32 +111,39 @@ export const addProductToCart = async (req, res) => {
 
 export const removeProductFromCart = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    // Vérifie si le produit existe
+    const product = await Product.findById(req.params.productId);
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    const user = await User.findById(req.user.id);
+    // Vérifie si l'utilisateur existe
+    const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (!user.cart || user.cart.length === 0) {
-      return res.status(400).json({ error: "User has no cart" });
+    // Vérifie si le panier de l'utilisateur existe
+    if (!user.userCarts || user.userCarts.length === 0) {
+      return res.status(404).json({ error: "User cart not found" });
     }
 
-    const index = user.cart.indexOf(product._id);
-    if (index === -1) {
-      return res
-        .status(404)
-        .json({ error: "Product not found in user's cart" });
+    // Trouve le panier de l'utilisateur contenant le produit à supprimer
+    const userCart = await Cart.findById(user.userCarts[0]);
+    if (!userCart) {
+      return res.status(404).json({ error: "User cart not found" });
     }
 
-    user.cart.splice(index, 1);
-    await user.save();
+    // Supprime le produit du panier de l'utilisateur
+    const index = userCart.products.indexOf(req.params.productId);
+    if (index !== -1) {
+      userCart.products.splice(index, 1);
+      await userCart.save();
+    }
 
-    res.status(200).json({ message: "Product removed from cart successfully" });
+    res.json({ message: "Product successfully removed from cart" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
