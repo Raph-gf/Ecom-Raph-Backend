@@ -99,6 +99,11 @@ export const addProductToCart = async (req, res) => {
     if (!product) {
       return res.status(404).json({ error: "Produit non trouvé" });
     }
+    const existingProduct = (item) => item.product === product._id;
+    const verifiedProduct = cart.products.findIndex(existingProduct);
+    if (verifiedProduct !== -1) {
+      cart.products[verifiedProduct].quantity += 1;
+    }
 
     cart.products.push(product._id);
     await cart.save();
