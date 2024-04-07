@@ -75,7 +75,7 @@ const updateUser = async (req, res) => {
       new: true,
     });
     console.log(user);
-    await user.save();
+
     res.json({ message: "User updated successfully", user });
   } catch (error) {
     res.status(500).json(error.message);
@@ -95,7 +95,7 @@ const deleteUser = async (req, res) => {
 const createUser = async (req, res) => {
   try {
     const user = await User.create(req.body);
-    user.password = await newUser.encryptedPassword(req.body.password);
+    user.password = await user.encryptedPassword(req.body.password);
     user.save();
     const createToken = jwt.sign({ id: user.id }, secretKey, {
       expiresIn: "1d",
