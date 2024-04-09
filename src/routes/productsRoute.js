@@ -7,6 +7,7 @@ import {
   getProduct,
   removeProductFromCart,
   updateProduct,
+  updateProductQuantity,
 } from "../controllers/productsController";
 
 const productRouter = require("express").Router();
@@ -15,9 +16,13 @@ productRouter.get("/all-products", getAllProducts);
 productRouter.get("/:id", getProduct);
 productRouter.post("/create-product", createProduct);
 productRouter.post("/:id/addToCart/:userId", addProductToCart);
+productRouter.put(
+  "/:userId/updateProductQuantity/:productId",
+  updateProductQuantity
+);
 productRouter.get("/:userId/cart", getAllProductsFromUserCart);
 productRouter.put("/update-product/:id", updateProduct);
-productRouter.delete("/delete-product/:id", deleteProduct);
+productRouter.delete("/delete-product/:productId", deleteProduct);
 productRouter.delete("/:productId/cart/:id", removeProductFromCart);
 
 export default productRouter;

@@ -67,12 +67,18 @@ export const getAllProductsFromUserCart = async (req, res) => {
       return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
 
-    const panier = await Cart.findById(user.userCarts).populate("products");
+    const panier = await Cart.findById(user.userCarts).populate({
+      path: "products",
+      populate: {
+        path: "product",
+      },
+    });
+
     if (!panier) {
       return res.status(404).json({ error: "Panier introuvable" });
     }
 
-    res.json({ User: user, Cart: panier });
+    res.json({ User: user, Cart: panier, products: panier.products });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -99,13 +105,11 @@ export const addProductToCart = async (req, res) => {
     if (!product) {
       return res.status(404).json({ error: "Produit non trouvé" });
     }
-    const existingProduct = (item) => item.product === product._id;
-    const verifiedProduct = cart.products.findIndex(existingProduct);
-    if (verifiedProduct !== -1) {
-      cart.products[verifiedProduct].quantity += 1;
-    }
 
-    cart.products.push(product._id);
+    cart.products.push({
+      product: product,
+      quantity: 1,
+    });
     await cart.save();
 
     res.json(cart);
@@ -114,39 +118,82 @@ export const addProductToCart = async (req, res) => {
   }
 };
 
+export const updateProductQuantity = async (req, res) => {
+  try {
+    // Recherche de l'utilisateur
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur non trouvé." });
+    }
+
+    // Recherche du panier de l'utilisateur
+    const cart = await Cart.findById(user.userCarts);
+    if (!cart) {
+      return res.status(404).json({ message: "Panier non trouvé." });
+    }
+
+    // ID du produit à mettre à jour
+    const productId = await Product.findById(req.params.productId);
+    if (!productId) {
+      return res.status(404).json({ error: "Produit non trouvé" });
+    }
+    // Nouvelle quantité à définir
+    const newQuantity = req.body.quantity;
+
+    // Trouver l'élément correspondant dans le panier
+    const cartItem = cart.products.find((product) => product._id === productId);
+
+    if (!cartItem) {
+      return res
+        .status(404)
+        .json({ message: "Produit non trouvé dans le panier." });
+    }
+
+    // Mettre à jour la quantité du produit dans le panier
+    cartItem.quantity = newQuantity;
+
+    // Sauvegarder les modifications apportées au panier
+    await cart.save();
+
+    res.json(cartItem);
+  } catch (error) {
+    console.error(
+      "Erreur lors de la mise à jour de la quantité du produit :",
+      error
+    );
+    res.status(500).json({
+      message: "Erreur lors de la mise à jour de la quantité du produit.",
+    });
+  }
+};
+
 export const removeProductFromCart = async (req, res) => {
   try {
-    // Vérifie si le produit existe
     const product = await Product.findById(req.params.productId);
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    // Vérifie si l'utilisateur existe
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Vérifie si le panier de l'utilisateur existe
-    if (!user.userCarts || user.userCarts.length === 0) {
-      return res.status(404).json({ error: "User cart not found" });
+    let cart = await Cart.findById(user.userCarts[0]);
+    if (!cart) {
+      return res.status(404).json({ error: "Cart not found" });
     }
 
-    // Trouve le panier de l'utilisateur contenant le produit à supprimer
-    const userCart = await Cart.findById(user.userCarts[0]);
-    if (!userCart) {
-      return res.status(404).json({ error: "User cart not found" });
-    }
+    cart.products.splice(product, 1);
+    console.log(cart);
+    cart.save();
+    cart = await Cart.findById(cart._id).populate("products");
 
-    // Supprime le produit du panier de l'utilisateur
-    const index = userCart.products.indexOf(req.params.productId);
-    if (index !== -1) {
-      userCart.products.splice(index, 1);
-      await userCart.save();
-    }
-
-    res.json({ message: "Product successfully removed from cart" });
+    res.json({
+      DeletedProduct: product,
+      Cart: cart,
+      message: "Product successfully removed from cart",
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
