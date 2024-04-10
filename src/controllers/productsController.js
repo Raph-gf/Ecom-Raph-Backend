@@ -169,30 +169,35 @@ export const updateProductQuantity = async (req, res) => {
 
 export const removeProductFromCart = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.productId);
-    if (!product) {
-      return res.status(404).json({ error: "Product not found" });
-    }
+    const productId = req.params.productId;
 
+    // Recherche du produit dans le panier de l'utilisateur
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    let cart = await Cart.findById(user.userCarts[0]);
+    const cart = await Cart.findById(user.userCarts[0]);
     if (!cart) {
       return res.status(404).json({ error: "Cart not found" });
     }
 
-    cart.products.splice(product, 1);
-    console.log(cart);
-    cart.save();
-    cart = await Cart.findById(cart._id).populate("products");
+    const index = cart.products.findIndex(
+      (p) => p._id.toString() === productId
+    );
+    if (index === -1) {
+      // Si le produit n'est pas trouvé dans le panier, renvoyer une erreur
+      return res.status(404).json({ error: "Product not found in cart" });
+    }
 
+    // Suppression du produit du panier
+    cart.products.splice(index, 1);
+    await cart.save();
+
+    // Répondre avec les données mises à jour du panier
     res.json({
-      DeletedProduct: product,
-      Cart: cart,
       message: "Product successfully removed from cart",
+      cart: cart,
     });
   } catch (error) {
     console.error(error);
