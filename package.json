@@ -14,7 +14,9 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.1.1",
+    "mysql": "^2.18.1",
     "nodemon": "^3.0.3",
+    "stripe": "^15.1.0",
     "volleyball": "^1.5.1"
   },
   "keywords": [],
