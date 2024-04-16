@@ -22,7 +22,7 @@ const handlePayment = async (req, res) => {
 
     const cartProducts = userCart.products;
 
-    console.log("Cart Products:", cartProducts); // Ajouter ce console.log pour afficher les produits dans le panier
+    console.log("Cart Products:", cartProducts);
 
     const lineItems = await Promise.all(
       cartProducts.map(async (item) => {
@@ -30,9 +30,9 @@ const handlePayment = async (req, res) => {
         if (!product) {
           throw new Error("Product not found");
         }
-        console.log("Product:", product); // Ajouter ce console.log pour afficher les informations du produit
+        console.log("Product:", product);
         const unitAmount = Math.round(product.price * 100);
-        const image = product.images.length > 0 ? product.images[0] : null; // Convertir le prix en centimes
+        const image = product.images.length > 0 ? product.images[0] : null;
         return {
           price_data: {
             currency: "usd",

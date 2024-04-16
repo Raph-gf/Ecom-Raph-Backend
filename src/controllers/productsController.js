@@ -1,6 +1,7 @@
 import Product from "../models/productsModel";
 import User from "../models/userModel";
 import Cart from "../models/cartModels";
+import upload from "../middlewares.js/multer";
 
 export const getAllProducts = async (req, res) => {
   try {
@@ -23,18 +24,34 @@ export const getProduct = async (req, res) => {
 };
 
 export const createProduct = async (req, res) => {
+  console.log(req.files);
   try {
-    const newproduct = await Product.create(req.body);
-    console.log(newproduct.email);
-    res.json({ message: "Product created succesfully", newproduct });
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No images uploaded" });
+    }
+    const fileNames = req.files.map((file) => file.filename);
+    const newProduct = await Product.create({
+      name: req.body.name,
+      price: req.body.price,
+      description: req.body.description,
+      images: fileNames,
+    });
+    res
+      .status(201)
+      .json({ message: "Product created successfully", newProduct });
   } catch (error) {
-    res.status(500).json(error.message);
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Failed to create product", error: error.message });
   }
 };
+
 export const updateProduct = async (req, res) => {
   try {
     const updateProduct = await Product.findByIdAndUpdate(
       req.params.id,
+      req.file.filename,
       req.body,
       {
         new: true,

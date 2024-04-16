@@ -3,9 +3,11 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import cors from "cors";
 import Stripe from "stripe";
+import multer from "multer";
 import productRouter from "./routes/productsRoute";
 import userRouter from "./routes/userRoute";
 import paymentRouter from "./routes/paymentRoute";
+
 main().catch((err) => console.log(err));
 
 async function main() {
@@ -16,10 +18,12 @@ async function main() {
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const port = process.env.PORT;
+const upload = multer({ dest: "uploads/" });
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(express.static("./uploads/images"));
 
 app.get("/", (req, res) => {
   res.json("Welcome to the huuudd");
