@@ -58,6 +58,7 @@ const handlePayment = async (req, res) => {
       success_url: "http://localhost:3456/payment/stripe/success",
       cancel_url: "http://localhost:3456/payment/stripe/failed",
     });
+    await Cart.findByIdAndDelete(user.cartProducts);
 
     res.json({ url: session.url });
   } catch (error) {

@@ -9,5 +9,5 @@ const productSchema = new Schema({
   quantity: { type: Number, default: 1 },
 });
 
-const Product = model("Product", productSchema);
+const Product = model("product", productSchema);
 export default Product;

@@ -41,5 +41,5 @@ userSchema.methods.validPassword = async (candidatePassword, oldPassword) => {
   return result;
 };
 
-const User = model("User", userSchema);
+const User = model("user", userSchema);
 export default User;

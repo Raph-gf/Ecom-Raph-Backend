@@ -187,12 +187,14 @@ export const updateProductQuantity = async (req, res) => {
 export const removeProductFromCart = async (req, res) => {
   try {
     const productId = req.params.productId;
+    console.log(productId);
 
     // Recherche du produit dans le panier de l'utilisateur
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+    console.log(user);
 
     const cart = await Cart.findById(user.userCarts[0]);
     if (!cart) {
