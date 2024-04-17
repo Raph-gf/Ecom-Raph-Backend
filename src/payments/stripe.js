@@ -55,7 +55,7 @@ const handlePayment = async (req, res) => {
       line_items: lineItems,
       mode: "payment",
       customer_email: user.email,
-      success_url: "http://localhost:3456/payment/stripe/success",
+      success_url: `${process.env.CLIENT_SITE_URL}/stripe/payment/success`,
       cancel_url: "http://localhost:3456/payment/stripe/failed",
     });
     await Cart.findByIdAndDelete(user.cartProducts);
