@@ -1,6 +1,7 @@
-const { default: handlePayment } = require("../payments/stripe");
+import { Router } from "express";
+import handlePayment from "../payments/stripe";
 
-const paymentRouter = require("express").Router();
+const paymentRouter = Router();
 paymentRouter.post("/stripe/:userId", handlePayment);
 
 export default paymentRouter;
