@@ -48,23 +48,36 @@ export const createProduct = async (req, res) => {
 };
 
 export const updateProduct = async (req, res) => {
-  try {
-    const updateProduct = await Product.findByIdAndUpdate(
-      req.params.id,
-      req.file.filename,
-      req.body,
-      {
-        new: true,
-      }
-    );
-    console.log(updateProduct);
-    console.log(updateProduct);
-    await updateProduct.save();
-    res.json({ message: "Product updated succesfully", updateProduct });
-  } catch (error) {
-    res.status(500).json(error.message);
-  }
+  upload.any()(req, res, async (err) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Failed to process files" });
+    }
+
+    try {
+      const images = req.files.map((file) => file.filename);
+      const updateProduct = await Product.findByIdAndUpdate(
+        req.params.id,
+        {
+          name: req.body.name,
+          price: req.body.price,
+          description: req.body.description,
+          images: images,
+        },
+        { new: true }
+      );
+      console.log(updateProduct);
+      await updateProduct.save();
+      res.json({ message: "Product updated successfully", updateProduct });
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json({ message: "Failed to update product", error: error.message });
+    }
+  });
 };
+
 export const deleteProduct = async (req, res) => {
   try {
     const deleteProduct = await Product.findByIdAndDelete({
@@ -84,7 +97,7 @@ export const getAllProductsFromUserCart = async (req, res) => {
       return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
 
-    const panier = await Cart.findById(user.userCarts).populate({
+    const panier = await Cart.findById(user.userCart).populate({
       path: "products",
       populate: {
         path: "product",
@@ -109,12 +122,12 @@ export const addProductToCart = async (req, res) => {
       return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
 
-    let cart = await Cart.findById(user.userCarts);
+    let cart = await Cart.findById(user.userCart);
 
     if (!cart) {
       cart = await Cart.create({ products: [] });
 
-      user.userCarts.push(cart._id);
+      user.userCart.push(cart._id);
       user.save();
     }
 
@@ -144,7 +157,7 @@ export const updateProductQuantity = async (req, res) => {
     }
 
     // Recherche du panier de l'utilisateur
-    const cart = await Cart.findById(user.userCarts);
+    const cart = await Cart.findById(user.userCart);
     if (!cart) {
       return res.status(404).json({ message: "Panier non trouvé." });
     }
@@ -196,7 +209,7 @@ export const removeProductFromCart = async (req, res) => {
     }
     console.log(user);
 
-    const cart = await Cart.findById(user.userCarts[0]);
+    const cart = await Cart.findById(user.userCart[0]);
     if (!cart) {
       return res.status(404).json({ error: "Cart not found" });
     }

@@ -25,7 +25,7 @@ const userSchema = new Schema(
     },
     Adress: { type: String, required: true },
     isAdmin: { type: Boolean, default: false },
-    userCarts: [{ type: Schema.Types.ObjectId, ref: "cart" }],
+    userCart: [{ type: Schema.Types.ObjectId, ref: "cart" }],
   },
   { timestamps: true }
 );
@@ -41,5 +41,5 @@ userSchema.methods.validPassword = async (candidatePassword, oldPassword) => {
   return result;
 };
 
-const User = model("user", userSchema);
+const User = model("User", userSchema);
 export default User;

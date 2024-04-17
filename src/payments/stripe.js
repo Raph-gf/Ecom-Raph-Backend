@@ -15,7 +15,7 @@ const handlePayment = async (req, res) => {
       return res.status(400).send({ message: "User not found" });
     }
 
-    const userCart = await Cart.findById(user.userCarts).populate("products");
+    const userCart = await Cart.findById(user.userCart).populate("products");
     if (!userCart) {
       return res.status(400).json({ message: "Cart not found" });
     }
@@ -58,7 +58,6 @@ const handlePayment = async (req, res) => {
       success_url: `${process.env.CLIENT_SITE_URL}/stripe/payment/success`,
       cancel_url: "http://localhost:3456/payment/stripe/failed",
     });
-    await Cart.findByIdAndDelete(user.cartProducts);
 
     res.json({ url: session.url });
   } catch (error) {
