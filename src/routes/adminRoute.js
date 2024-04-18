@@ -1,4 +1,3 @@
-import Auth from "../middlewares/auth";
 import {
   createProduct,
   deleteProduct,
@@ -6,6 +5,12 @@ import {
   updateProduct,
 } from "../controllers/productsController";
 import upload from "../middlewares/multer";
+import {
+  deleteUser,
+  getAllUsers,
+  getUser,
+  updateUser,
+} from "../controllers/userController";
 
 const adminRouter = require("express").Router();
 
@@ -18,5 +23,9 @@ adminRouter.post(
 
   createProduct
 );
+adminRouter.get("/user/allusers", getAllUsers);
+adminRouter.get("/user/:id", getUser);
+adminRouter.put("/user/:id/update", updateUser);
+adminRouter.delete("/user/:id/delete", deleteUser);
 
 export default adminRouter;

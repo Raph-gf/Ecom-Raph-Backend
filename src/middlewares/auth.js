@@ -23,11 +23,6 @@ const auth = async (req, res, next) => {
       const error = new Error("User not found");
       throw error;
     }
-    // if (!user.isAdmin) {
-    //   const error = new Error("User is not admin");
-    //   throw error;
-    // }
-
     next();
   } catch (error) {
     next(error);
