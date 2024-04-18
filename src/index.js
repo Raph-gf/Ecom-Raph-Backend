@@ -2,11 +2,12 @@ import express from "express";
 import "dotenv/config";
 import mongoose from "mongoose";
 import cors from "cors";
-import Stripe from "stripe";
 import multer from "multer";
 import productRouter from "./routes/productsRoute";
 import userRouter from "./routes/userRoute";
 import paymentRouter from "./routes/paymentRoute";
+import adminRouter from "./routes/adminRoute";
+import { auth } from "./middlewares/auth";
 
 main().catch((err) => console.log(err));
 
@@ -15,7 +16,6 @@ async function main() {
   console.log(`[DATABASE] MongoDB is connected ⚡️`);
 }
 
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const port = process.env.PORT;
 const upload = multer({ dest: "uploads/" });
@@ -37,6 +37,7 @@ app.get("/payment/stripe/success", (req, res) => {
 app.use("/users", userRouter);
 app.use("/products", productRouter);
 app.use("/payment", paymentRouter);
+app.use("/admin", auth, adminRouter);
 
 app.listen(port, () =>
   console.log(`[SERVER] Listening on http://localhost:${port}`)

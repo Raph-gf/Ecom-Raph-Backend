@@ -1,7 +1,7 @@
 import Product from "../models/productsModel";
 import User from "../models/userModel";
 import Cart from "../models/cartModels";
-import upload from "../middlewares.js/multer";
+import upload from "../middlewares/multer";
 
 export const getAllProducts = async (req, res) => {
   try {
@@ -15,7 +15,7 @@ export const getAllProducts = async (req, res) => {
 
 export const getProduct = async (req, res) => {
   try {
-    const product = await Product.findById({ _id: req.params.id });
+    const product = await Product.findById({ _id: req.params.productId });
     console.log(product);
     res.json(product);
   } catch (error) {
@@ -53,7 +53,6 @@ export const updateProduct = async (req, res) => {
       console.error(err);
       return res.status(500).json({ message: "Failed to process files" });
     }
-
     try {
       const images = req.files.map((file) => file.filename);
       const updateProduct = await Product.findByIdAndUpdate(
@@ -96,19 +95,16 @@ export const getAllProductsFromUserCart = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
-
     const panier = await Cart.findById(user.userCart).populate({
       path: "products",
       populate: {
         path: "product",
       },
     });
-
     if (!panier) {
       return res.status(404).json({ error: "Panier introuvable" });
     }
-
-    res.json({ User: user, Cart: panier, products: panier.products });
+    res.json({ User: user, Cart: panier, Products: panier.products });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -148,61 +144,11 @@ export const addProductToCart = async (req, res) => {
   }
 };
 
-export const updateProductQuantity = async (req, res) => {
-  try {
-    // Recherche de l'utilisateur
-    const user = await User.findById(req.params.userId);
-    if (!user) {
-      return res.status(404).json({ message: "Utilisateur non trouvé." });
-    }
-
-    // Recherche du panier de l'utilisateur
-    const cart = await Cart.findById(user.userCart);
-    if (!cart) {
-      return res.status(404).json({ message: "Panier non trouvé." });
-    }
-
-    // ID du produit à mettre à jour
-    const productId = await Product.findById(req.params.productId);
-    if (!productId) {
-      return res.status(404).json({ error: "Produit non trouvé" });
-    }
-    // Nouvelle quantité à définir
-    const newQuantity = req.body.quantity;
-
-    // Trouver l'élément correspondant dans le panier
-    const cartItem = cart.products.find((product) => product._id === productId);
-
-    if (!cartItem) {
-      return res
-        .status(404)
-        .json({ message: "Produit non trouvé dans le panier." });
-    }
-
-    // Mettre à jour la quantité du produit dans le panier
-    cartItem.quantity = newQuantity;
-
-    // Sauvegarder les modifications apportées au panier
-    await cart.save();
-
-    res.json(cartItem);
-  } catch (error) {
-    console.error(
-      "Erreur lors de la mise à jour de la quantité du produit :",
-      error
-    );
-    res.status(500).json({
-      message: "Erreur lors de la mise à jour de la quantité du produit.",
-    });
-  }
-};
-
 export const removeProductFromCart = async (req, res) => {
   try {
     const productId = req.params.productId;
     console.log(productId);
 
-    // Recherche du produit dans le panier de l'utilisateur
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -218,15 +164,11 @@ export const removeProductFromCart = async (req, res) => {
       (p) => p._id.toString() === productId
     );
     if (index === -1) {
-      // Si le produit n'est pas trouvé dans le panier, renvoyer une erreur
       return res.status(404).json({ error: "Product not found in cart" });
     }
-
-    // Suppression du produit du panier
     cart.products.splice(index, 1);
     await cart.save();
 
-    // Répondre avec les données mises à jour du panier
     res.json({
       message: "Product successfully removed from cart",
       cart: cart,

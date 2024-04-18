@@ -1,8 +1,10 @@
 import User from "../models/userModel";
 import "dotenv/config";
+import jwt from "jsonwebtoken";
+import { generateToken } from "../middlewares/auth";
 
-const jwt = require("jsonwebtoken");
-const secretKey = process.env.SECRETKEY;
+// const jwt = require("jsonwebtoken");
+const secretKey = process.env.JWT_SECRETKEY;
 
 const signIn = async (req, res) => {
   try {
@@ -15,10 +17,9 @@ const signIn = async (req, res) => {
     const newUser = await User.create(req.body);
     newUser.password = await newUser.encryptedPassword(req.body.password);
     newUser.save();
-    const createToken = jwt.sign({ id: newUser.id }, secretKey, {
-      expiresIn: "1d",
-    });
-    res.json({ newUser, createToken, message: "new user created" });
+    const token = generateToken(newUser._id);
+
+    res.json({ newUser, token, message: "new user created" });
   } catch (error) {
     res.json({ error: error.message });
     console.log({ error: error.message });
@@ -41,19 +42,8 @@ const login = async (req, res) => {
       const error = new Error("Invalid password");
       throw error;
     }
-    const token = jwt.sign(
-      {
-        id: user.id,
-        name: user.firstname,
-        admin: user.isAdmin,
-        cart: user.userCarts,
-        adresse: user.Adress,
-      },
-      secretKey,
-      {
-        expiresIn: "1d",
-      }
-    );
+
+    const token = generateToken(user);
     res.json({ token, message: "Login successful" });
   } catch (error) {
     res.json({ error: error.message });
