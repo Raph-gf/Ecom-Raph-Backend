@@ -24,8 +24,9 @@ const userSchema = new Schema(
       required: true,
     },
     Adress: { type: String, required: true },
-    isAdmin: { type: Boolean, default: false },
+    role: { type: String, enum: ["admin", "user"], default: "user" },
     userCart: [{ type: Schema.Types.ObjectId, ref: "cart" }],
+    profilePicture: { type: String },
   },
   { timestamps: true }
 );

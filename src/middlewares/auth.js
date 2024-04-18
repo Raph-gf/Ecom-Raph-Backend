@@ -33,9 +33,10 @@ const generateToken = (user) => {
   const userPayload = {
     id: user._id,
     name: user.firstname,
-    admin: user.isAdmin,
+    role: user.role,
     cart: user.userCart,
     adresse: user.Adress,
+    // profilePicture: user.profilePicture,
   };
   const token = jwt.sign(userPayload, secretKey, { expiresIn: "3d" });
   return token;
