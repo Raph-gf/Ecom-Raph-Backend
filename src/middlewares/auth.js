@@ -23,11 +23,6 @@ const auth = async (req, res, next) => {
       const error = new Error("User not found");
       throw error;
     }
-    // if (!user.isAdmin) {
-    //   const error = new Error("User is not admin");
-    //   throw error;
-    // }
-
     next();
   } catch (error) {
     next(error);
@@ -38,9 +33,10 @@ const generateToken = (user) => {
   const userPayload = {
     id: user._id,
     name: user.firstname,
-    admin: user.isAdmin,
+    role: user.role,
     cart: user.userCart,
     adresse: user.Adress,
+    // profilePicture: user.profilePicture,
   };
   const token = jwt.sign(userPayload, secretKey, { expiresIn: "3d" });
   return token;
