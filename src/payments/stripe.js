@@ -20,18 +20,19 @@ const handlePayment = async (req, res) => {
       return res.status(400).json({ message: "Cart not found" });
     }
 
-    const cartProducts = userCart.products;
+    // const cartProducts = userCart.products;
 
-    console.log("Cart Products:", cartProducts);
+    const products = req.body.lineItems;
+    console.log("Cart Products:", products);
 
     const lineItems = await Promise.all(
-      cartProducts.map(async (item) => {
-        const product = await Product.findById(item.product);
+      products.map(async (item) => {
+        const product = await Product.findById(item.productId);
         if (!product) {
           throw new Error("Product not found");
         }
         console.log("Product:", product);
-        const unitAmount = Math.round(product.price * 100 * product.quantity);
+        const unitAmount = Math.round(product.price * 100);
         const image = product.images.length > 0 ? product.images[0] : null;
         console.log(image);
         return {
