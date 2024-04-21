@@ -31,7 +31,7 @@ const handlePayment = async (req, res) => {
           throw new Error("Product not found");
         }
         console.log("Product:", product);
-        const unitAmount = Math.round(product.price * 100);
+        const unitAmount = Math.round(product.price * 100 * product.quantity);
         const image = product.images.length > 0 ? product.images[0] : null;
         console.log(image);
         return {
