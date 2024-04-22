@@ -20,8 +20,6 @@ const handlePayment = async (req, res) => {
       return res.status(400).json({ message: "Cart not found" });
     }
 
-    // const cartProducts = userCart.products;
-
     const products = req.body.lineItems;
     console.log("Cart Products:", products);
 
@@ -33,7 +31,7 @@ const handlePayment = async (req, res) => {
         }
         console.log("Product:", product);
         const unitAmount = Math.round(product.price * 100);
-        const image = product.images.length > 0 ? product.images[0] : null;
+        const image = product.images.length > 0 ? product.images[1] : null;
         console.log(image);
         return {
           price_data: {
@@ -50,7 +48,7 @@ const handlePayment = async (req, res) => {
       })
     );
 
-    console.log("Line Items:", lineItems); // Ajouter ce console.log pour afficher les éléments de ligne
+    console.log("Line Items:", lineItems);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -62,7 +60,6 @@ const handlePayment = async (req, res) => {
     });
 
     res.json({ url: session.url });
-    // cartProducts.splice(0, cartProducts.length);
   } catch (error) {
     console.error(error);
     res
