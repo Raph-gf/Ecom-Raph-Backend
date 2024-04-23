@@ -31,7 +31,7 @@ const handlePayment = async (req, res) => {
         }
         console.log("Product:", product);
         const unitAmount = Math.round(product.price * 100);
-        const image = product.images.length > 0 ? product.images[1] : null;
+        const image = product.images.length > 0 ? product.images[0] : null;
         console.log(image);
         return {
           price_data: {
