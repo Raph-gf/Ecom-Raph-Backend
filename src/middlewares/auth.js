@@ -36,7 +36,6 @@ const generateToken = (user) => {
     role: user.role,
     cart: user.userCart,
     adresse: user.Adress,
-    // profilePicture: user.profilePicture,
   };
   const token = jwt.sign(userPayload, secretKey, { expiresIn: "3d" });
   return token;
