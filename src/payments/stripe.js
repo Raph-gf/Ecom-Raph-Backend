@@ -54,7 +54,7 @@ const handlePayment = async (req, res) => {
       mode: "payment",
       customer_email: user.email,
       success_url: `${process.env.CLIENT_SITE_URL}/stripe/payment/success`,
-      cancel_url: "http://localhost:3456/payment/stripe/failed",
+      cancel_url: `${process.env.CLIENT_SITE_URL}/`,
     });
 
     // Construire le contenu dynamique de l'e-mail

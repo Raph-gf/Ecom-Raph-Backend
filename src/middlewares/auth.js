@@ -1,8 +1,10 @@
 import User from "../models/userModel";
 import "dotenv/config";
 import jwt from "jsonwebtoken";
+import passport from "passport";
 
 const secretKey = process.env.JWT_SECRETKEY;
+// const GoogleStrategy = require("passport-google-oauth20").OAuth2Strategy;
 
 const auth = async (req, res, next) => {
   try {
@@ -40,5 +42,28 @@ const generateToken = (user) => {
   const token = jwt.sign(userPayload, secretKey, { expiresIn: "3d" });
   return token;
 };
+
+// const AuthWithGoogle = () => {
+//   passport.use(
+//     new GoogleStrategy(
+//       {
+//         clientID: process.env.GOOGLE_CLIENT_ID,
+//         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+//         callbackURL: "http://localhost:3456/",
+//       },
+//       function (accessToken, refreshToken, profile, cb) {
+//         User.findOrCreate({ googleId: profile.id }, function (err, user) {
+//           return cb(err, user);
+//         });
+//       }
+//     )
+//   );
+//   passport.serializeUser(function (err, user) {
+//     return done(err, user);
+//   });
+//   passport.deserializeUser(function (err, user) {
+//     return done(err, user);
+//   });
+// };
 
 export { auth, generateToken };

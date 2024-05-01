@@ -1,10 +1,4 @@
-import {
-  Schema,
-  SchemaType,
-  SchemaTypeOptions,
-  SchemaTypes,
-  model,
-} from "mongoose";
+import { Schema, model } from "mongoose";
 import bcrypt from "bcryptjs";
 
 const userSchema = new Schema(
@@ -12,11 +6,9 @@ const userSchema = new Schema(
     firstname: { type: String, required: true, trim: true },
     lastname: { type: String, required: true, trim: true },
     email: { type: String, required: true, lowercase: true, unique: true },
-    password: {
-      type: String,
-      required: true,
-      minlength: [6, "at least 6 characters"],
-    },
+    password: { type: String, required: true },
+    googleId: { type: String, unique: true },
+    googleEmail: { type: String, lowercase: true },
     zipCode: {
       type: Number,
       min: [1000, "Code Postal is too short"],
