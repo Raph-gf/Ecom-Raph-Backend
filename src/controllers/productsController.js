@@ -6,7 +6,7 @@ import upload from "../middlewares/multer";
 export const getAllProducts = async (req, res) => {
   try {
     const allProducts = await Product.find();
-    console.log(allProducts);
+    // console.log(allProducts);
     res.json(allProducts);
   } catch (error) {
     res.status(500).json(error.message);

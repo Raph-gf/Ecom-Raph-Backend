@@ -11,6 +11,8 @@ import { auth, generateToken } from "./middlewares/auth";
 import passport from "passport";
 import session from "express-session";
 import User from "./models/userModel";
+import axios from "axios";
+import cookieParser from "cookie-parser";
 
 main().catch((err) => console.log(err));
 
@@ -24,13 +26,16 @@ const port = process.env.PORT;
 const { Strategy: GoogleStrategy } = require("passport-google-oauth20");
 const upload = multer({ dest: "uploads/" });
 
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-    method: ["GET", "POST", "PUT", "DELETE"],
-  })
-);
+const corsOptions = {
+  origin: ["http://localhost:5173"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static("./uploads/images"));
@@ -39,7 +44,7 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: true },
+    cookie: { maxAge: 1000 * 60 * 60 * 24 },
   })
 );
 app.use(passport.initialize());
@@ -50,22 +55,20 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:3456/auth/google",
+      callbackURL: "http://localhost:3456/auth/google/callback",
+      scope: ["email", "profile"],
     },
     async function (accessToken, refreshToken, profile, cb) {
-      console.log("Google Profile:", profile);
-
       try {
         const googleId = profile.id;
         const email = profile.emails[0].value;
         const firstname = profile.name.givenName;
         const lastname = profile.name.familyName;
-        const password = "googlePassword";
+        const password = "azerty";
         const zipCode = 10000;
         const Adress = "Adresse par défaut";
         const role = "user";
         const userCart = [];
-
         let googleUser = await User.findOne({ email });
 
         if (!googleUser) {
@@ -79,17 +82,16 @@ passport.use(
             Adress,
             role,
             userCart,
-            // picture,
           });
-          console.log(googleUser);
           googleUser.password = await googleUser.encryptedPassword(password);
           googleUser.save();
-
           const token = generateToken(googleUser.id);
-          console.log(token);
-          console.log(googleUser);
+          console.log("user successfully sign");
           return cb(null, { googleUser, token });
         } else {
+          const token = generateToken(googleUser.id);
+          console.log("user successfully logged in");
+          googleUser.token = token;
           return cb(null, googleUser, token);
         }
       } catch (error) {
@@ -102,8 +104,9 @@ passport.use(
 passport.serializeUser(function (user, done) {
   done(null, user);
 });
-passport.deserializeUser(function (user, done) {
-  done(null, user);
+passport.deserializeUser(async function (user, done) {
+  const googleuser = await User.findById(user.id);
+  done(null, googleuser);
 });
 
 app.get("/", (req, res) => {
@@ -111,17 +114,87 @@ app.get("/", (req, res) => {
 });
 
 app.get(
-  "/auth/google",
+  "/auth/google/login",
   passport.authenticate("google", { scope: ["email", "profile"] })
 );
 
 app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
-    successRedirect: "http://localhost:5173/",
     failureRedirect: "http://localhost:5173/sign-in",
-  })
+  }),
+  (req, res) => {
+    const user = req.user.googleUser || req.user;
+    const token = req.user.token || generateToken(user.id);
+    console.log(token);
+    console.log(user);
+
+    res.cookie("jwtToken", token, { httpOnly: true, secure: false });
+    res.redirect("http://localhost:3456/login/success");
+  }
 );
+app.get("/login/success", async (req, res) => {
+  if (req.isAuthenticated()) {
+    try {
+      const userExists = await User.findOne({ email: req.user.email });
+      console.log(userExists);
+
+      if (userExists) {
+        const token = generateToken(userExists._id);
+        return res.status(200).json({
+          user: req.user,
+          message: "Successfully logged in",
+          token: token,
+        });
+      } else {
+        const googleId = req.user.id;
+        const email = req.user.emails[0].value;
+        const firstname = req.user.name.givenName;
+        const lastname = req.user.name.familyName;
+        const password = "azerty";
+        const zipCode = 10000;
+        const address = "Adresse par défaut";
+        const role = "user";
+        const userCart = [];
+
+        const newUser = new User({
+          googleId,
+          email,
+          firstname,
+          lastname,
+          password,
+          zipCode,
+          address,
+          role,
+          userCart,
+        });
+
+        await newUser.save();
+
+        const token = generateToken(newUser._id);
+        return res.status(200).json({
+          user: req.user,
+          message: "Successfully logged in",
+          token: token,
+        });
+      }
+    } catch (error) {
+      return res.status(500).json({
+        message: "Server error",
+        error: error.message,
+      });
+    }
+  } else {
+    return res.status(403).json({
+      message: "Not Authorized",
+    });
+  }
+});
+
+app.get("/login/failed", (req, res) => {
+  res.status(401);
+  throw new Error("Login Failed");
+});
 
 app.use("/users", userRouter);
 app.use("/products", productRouter);
