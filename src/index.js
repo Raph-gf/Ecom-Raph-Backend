@@ -60,6 +60,7 @@ passport.use(
     },
     async function (accessToken, refreshToken, profile, cb) {
       try {
+        // console.log({ profile: profile });
         const googleId = profile.id;
         const email = profile.emails[0].value;
         const firstname = profile.name.givenName;
@@ -122,25 +123,28 @@ app.get(
   "/auth/google/callback",
   passport.authenticate("google", {
     failureRedirect: "http://localhost:5173/sign-in",
+    // successRedirect: "http://localhost:5173/",
   }),
   (req, res) => {
-    const user = req.user.googleUser || req.user;
-    const token = req.user.token || generateToken(user.id);
-    console.log(token);
+    const user = req.user;
     console.log(user);
-
+    const token = generateToken(user._id);
     res.cookie("jwtToken", token, { httpOnly: true, secure: false });
-    res.redirect("http://localhost:3456/login/success");
+    res.status(200).json({ user: user, token: token });
+    // res.redirect("http://localhost:3456/login/success");
   }
 );
 app.get("/login/success", async (req, res) => {
   if (req.isAuthenticated()) {
+    console.log(req.user);
+    console.log("blanla");
     try {
-      const userExists = await User.findOne({ email: req.user.email });
-      console.log(userExists);
+      const user = await User.findOne({ email: req.user.email });
+      console.log(user);
+      console.log("salut");
 
-      if (userExists) {
-        const token = generateToken(userExists._id);
+      if (user) {
+        const token = generateToken(user._id);
         return res.status(200).json({
           user: req.user,
           message: "Successfully logged in",
